@@ -18,7 +18,7 @@ export default {
     themes: [
       {
         "light": {
-          "primary": "#3E3C73", //violet
+          "primary": "#2E7A7F", //violet
           "base-300": "#DCE3EB",
           "base-200": "#FFFFFF",
           "base-100": "#F1F3F4",
@@ -35,7 +35,7 @@ export default {
 
         },
         "dark": {
-          "primary": "#3E3C73", //violet
+          "primary": "#2E7A7F", //violet
           "base-100": "#262C36",
           "base-200": "#191D23",
           "base-300": "#0D0F11",

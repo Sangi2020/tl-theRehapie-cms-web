@@ -116,16 +116,16 @@ function Sidebar({ isOpen, onClose, isCollapsed, setIsCollapsed }) {
             items: [
                 { name: 'Pages', path: '/pages', icon: Layout },
                 // { name: 'Blog Posts', path: '/posts', icon: PenTool, count: count.blogs },
-                { name: 'Case Studies', path: '/case-study', icon: BookOpenCheck, count: count.cases },
-                { name: 'Careers', path: '/career', icon: UserCog, count: count.carrers },
-                { name: 'Blogs', path: '/blog', icon: PenTool, count: count.blogs },
-                { name: 'Compliance', path: '/documents', icon: FileText },
-                { name: 'SEO Editor', path: '/seo-editor', icon: Layers },
-                { name: 'Video Management', path: '/youtube-videos', icon: YoutubeIcon, count: count.youTubeVideo },
-                { name: 'Team Management', path: '/team', icon: Users, count: count.team },
-                { name: 'FAQs', path: '/faqs', icon: FileQuestion, count: count.faqs },
-                { name: 'Services', path: '/services', icon: BriefcaseBusiness, count: count.services },
-                { name: 'Organization Details', path: '/organization-details', icon: Info, },
+                // { name: 'Case Studies', path: '/case-study', icon: BookOpenCheck, count: count.cases },
+                // { name: 'Careers', path: '/career', icon: UserCog, count: count.carrers },
+                // { name: 'Blogs', path: '/blog', icon: PenTool, count: count.blogs },
+                // { name: 'Compliance', path: '/documents', icon: FileText },
+                // { name: 'SEO Editor', path: '/seo-editor', icon: Layers },
+                // { name: 'Video Management', path: '/youtube-videos', icon: YoutubeIcon, count: count.youTubeVideo },
+                // { name: 'Team Management', path: '/team', icon: Users, count: count.team },
+                // { name: 'FAQs', path: '/faqs', icon: FileQuestion, count: count.faqs },
+                // { name: 'Services', path: '/services', icon: BriefcaseBusiness, count: count.services },
+                // { name: 'Organization Details', path: '/organization-details', icon: Info, },
             ]
         },
         {
@@ -138,10 +138,10 @@ function Sidebar({ isOpen, onClose, isCollapsed, setIsCollapsed }) {
         {
             section: "Marketing",
             items: [
-                { name: 'Newsletters', path: '/newsletters', icon: Newspaper, count: count.newsletters },
+                // { name: 'Newsletters', path: '/newsletters', icon: Newspaper, count: count.newsletters },
                 // { name: 'Comments', path: '/comments', icon: MessageSquare, count: count.comments },
-                { name: 'Testimonials', path: '/testimonials', icon: MessageSquare, count: count.testimonials },
-                { name: 'Social Media', path: '/social', icon: Globe, count: count.socialMedia },
+                // { name: 'Testimonials', path: '/testimonials', icon: MessageSquare, count: count.testimonials },
+                // { name: 'Social Media', path: '/social', icon: Globe, count: count.socialMedia },
             ]
         },
         {
@@ -230,7 +230,7 @@ function Sidebar({ isOpen, onClose, isCollapsed, setIsCollapsed }) {
                 <div className="flex items-center justify-between h-16 px-3">
                     <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isCollapsed ? 'w-0' : 'w-40'
                         }`}>
-                        <img src="https://www.vsgenxsolutions.com/_next/static/media/logo-1.ded65dd8.png" alt="" className="h-10 w-auto rounded-sm" />
+                        <img src="https://www.therehapie.com/assets/logo-small-new-BOTOnHfQ.png" alt="theREHApie logo" className="h-12 mt-3 w-auto rounded-sm" />
                     </div>
 
                     <button
@@ -261,7 +261,7 @@ function Sidebar({ isOpen, onClose, isCollapsed, setIsCollapsed }) {
                         }
 
                         return (
-                            <div key={section.section} className={`${index > 0 ? 'mt-6' : 'mt-2'}`}>
+                            <div key={section.section} className={`${index > 0 ? 'mt-6' : 'mt-5'}`}>
                                 <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isCollapsed ? 'h-0 opacity-0' : 'h-6 opacity-100'
                                     }`}>
                                     <h2 className="text-xs font-semibold text-neutral-content/70 uppercase tracking-wider px-2 mb-2">

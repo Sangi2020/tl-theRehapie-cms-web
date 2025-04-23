@@ -50,8 +50,8 @@ function PageLayout() {
       {/* iFrame Preview */}
       <div className={` rounded-xl overflow-y-auto   scrollbar-hidden shadow-lg ${screenClasses[screenSize]}`}>
         <iframe
-          src="https://www.vsgenxsolutions.com/"
-          title="VsGenx Solutions"
+          src="https://www.therehapie.com/"
+          title="theREHApie"
           className="w-full h-full  overflow-y-auto scrollbar-hidden"
         ></iframe>
       </div>
