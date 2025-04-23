@@ -67,40 +67,53 @@ function Sidebar({ isOpen, onClose, isCollapsed, setIsCollapsed }) {
         socialMedia: 0,
     });
     const { authState } = useAuth();
-    useEffect(() => {
-        const fetchCounts = async () => {
-            try {
-                const { data } = await axiosInstance.get('/stats/total-counts');
+
+
+ // In your Sidebar.jsx file, update the useEffect hook:
+
+useEffect(() => {
+    const fetchCounts = async () => {
+        try {
+            // Update the endpoint to match your backend route
+            const { data } = await axiosInstance.get('/stats/total-counts');
+            console.log(data);
+            if (data.success && data.counts) {
                 setCount({
-                    enquiries: data.counts.enquiries.unread || 0,
-                    comments: 0,
-                    notifications: data.counts.notifications.unread || 0,
-                    blogs: data.counts.blogs.total || 0,
-                    cases: data.counts.cases.total || 0,
-                    carrers: data.counts.carrers.total || 0,
-                    services: data.counts.services.total || 0,
-                    youTubeVideo: data.counts.youTubeVideo.total || 0,
-                    users: data.counts.users.total || 0,
-                    faqs: data.counts.faqs.total || 0,
-                    testimonials: data.counts.testimonials.total || 0,
-                    newsletters: data.counts.newsletter.subscribers || 0,
-                    clients: data.counts.clients.total || 0,
-                    socialMedia: data.counts.social.active || 0,
-                    team: data.counts.team.active || 0
+                    enquiries: data.counts.enquiries?.unread || 0,
+                    comments: 0, // Not provided by your API currently
+                    notifications: data.counts.notifications?.unread || 0,
+                    blogs: data.counts.blogs?.total || 0,
+                    cases: data.counts.cases?.total || 0,
+                    carrers: 0, // Not provided by your current API
+                    services: data.counts.services?.total || 0,
+                    youTubeVideo: data.counts.youTubeVideo?.total || 0,
+                    users: data.counts.users?.total || 0,
+                    faqs: data.counts.faqs?.total || 0,
+                    testimonials: data.counts.testimonials?.total || 0,
+                    newsletters: data.counts.newsletter?.subscribers || 0,
+                    clients: data.counts.clients?.total || 0,
+                    socialMedia: data.counts.social?.active || 0,
                 });
-            } catch (error) {
-                console.error('Error fetching sidebar counts:', error);
-                // Keep the previous state on error
-                setCount(prevCount => prevCount);
+                
+                // Optional: Log cache status in development
+                if (process.env.NODE_ENV === 'development') {
+                    console.log(`Stats loaded: ${data.meta?.cached ? 'cached data' : 'fresh data'}`);
+                }
             }
-        };
+        } catch (error) {
+            console.error('Error fetching sidebar counts:', error);
+            // Keep the previous state on error
+            setCount(prevCount => prevCount);
+        }
+    };
 
-        fetchCounts();
+    fetchCounts();
 
-        const interval = setInterval(fetchCounts, 60000); // Refresh every minute
+    const interval = setInterval(fetchCounts, 60000); // Refresh every minute
 
-        return () => clearInterval(interval);
-    }, []);
+    return () => clearInterval(interval);
+}, []);
+
 
     const navigation = [
         {
