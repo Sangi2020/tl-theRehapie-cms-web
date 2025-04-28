@@ -76,7 +76,6 @@ useEffect(() => {
         try {
             // Update the endpoint to match your backend route
             const { data } = await axiosInstance.get('/stats/total-counts');
-            console.log(data);
             if (data.success && data.counts) {
                 setCount({
                     enquiries: data.counts.enquiries?.unread || 0,
@@ -138,7 +137,7 @@ useEffect(() => {
                 // { name: 'Team Management', path: '/team', icon: Users, count: count.team },
                 // { name: 'FAQs', path: '/faqs', icon: FileQuestion, count: count.faqs },
                 // { name: 'Services', path: '/services', icon: BriefcaseBusiness, count: count.services },
-                // { name: 'Organization Details', path: '/organization-details', icon: Info, },
+                { name: 'Organization Details', path: '/organization-details', icon: Info, },
             ]
         },
         {
