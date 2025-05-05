@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
-import BackgroundImage from '../../assets/images/bg-img.jpg';
+import BackgroundImage from '../../assets/images/theREHApie_bg.jpg';
 import { Eye, EyeOff, Mail, Lock, Loader, X } from 'lucide-react';
 import axiosInstance from '../../config/axios';
 import { useAuth } from '../../context/AuthContext';

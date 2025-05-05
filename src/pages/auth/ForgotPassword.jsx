@@ -6,7 +6,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { Mail, Lock, XIcon, CheckCircleIcon, EyeOffIcon, EyeIcon } from 'lucide-react';
 import axiosInstance from '../../config/axios';
 import OTPInput from 'react-otp-input';
-import BackgroundImage from '../../assets/images/bg-img.jpg';
+import BackgroundImage from '../../assets/images/theREHApie_bg.jpg';
 
 // Validation Schemas
 const emailSchema = yup.object({

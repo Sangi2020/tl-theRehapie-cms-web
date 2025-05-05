@@ -132,7 +132,7 @@ useEffect(() => {
                 // { name: 'Careers', path: '/career', icon: UserCog, count: count.carrers },
                 // { name: 'Blogs', path: '/blog', icon: PenTool, count: count.blogs },
                 // { name: 'Compliance', path: '/documents', icon: FileText },
-                // { name: 'SEO Editor', path: '/seo-editor', icon: Layers },
+                { name: 'SEO Editor', path: '/seo-editor', icon: Layers },
                 // { name: 'Video Management', path: '/youtube-videos', icon: YoutubeIcon, count: count.youTubeVideo },
                 // { name: 'Team Management', path: '/team', icon: Users, count: count.team },
                 // { name: 'FAQs', path: '/faqs', icon: FileQuestion, count: count.faqs },
@@ -153,7 +153,7 @@ useEffect(() => {
                 // { name: 'Newsletters', path: '/newsletters', icon: Newspaper, count: count.newsletters },
                 // { name: 'Comments', path: '/comments', icon: MessageSquare, count: count.comments },
                 // { name: 'Testimonials', path: '/testimonials', icon: MessageSquare, count: count.testimonials },
-                // { name: 'Social Media', path: '/social', icon: Globe, count: count.socialMedia },
+                { name: 'Social Media', path: '/social', icon: Globe, count: count.socialMedia },
             ]
         },
         {
