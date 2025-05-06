@@ -10,7 +10,8 @@ import {
   XCircle,
   Globe,
   Plus,
-  Loader
+  Loader,
+  PlusCircle
 } from 'lucide-react';
 import axiosInstance from '../../config/axios';
 import { toast } from 'react-toastify';
@@ -24,12 +25,22 @@ const SocialMediaLayout = () => {
   const [error, setError] = useState(null);
   const [editing, setEditing] = useState(null);
   const [newLink, setNewLink] = useState("");
-  const [activeSocialCount, setActiveSocialCount] = useState()
+  const [activeSocialCount, setActiveSocialCount] = useState(0);
+  
+  // Modal states
   const [showAddLinkModal, setShowAddLinkModal] = useState(false);
+  const [showCreateSocialModal, setShowCreateSocialModal] = useState(false);
+  
+  // New social media states
+  const [newPlatform, setNewPlatform] = useState("");
+  const [newSocialUrl, setNewSocialUrl] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+  
   // Confirmation modals
   const [showStatusConfirmation, setShowStatusConfirmation] = useState(false);
   const [showActivationConfirmation, setShowActivationConfirmation] = useState(false);
   const [platformToToggle, setPlatformToToggle] = useState(null);
+  
   // Loading states for actions
   const [isDeactivating, setIsDeactivating] = useState(false);
   const [isActivating, setIsActivating] = useState(false);
@@ -44,6 +55,15 @@ const SocialMediaLayout = () => {
     linkedin: <Linkedin className="w-6 h-6 text-blue-700" />
   };
 
+  // Platform options for dropdown
+  const platformOptions = [
+    { value: "instagram", label: "Instagram" },
+    { value: "facebook", label: "Facebook" },
+    { value: "whatsapp", label: "WhatsApp" },
+    { value: "youtube", label: "YouTube" },
+    { value: "linkedin", label: "LinkedIn" }
+  ];
+
   // Fetch social links from API
   useEffect(() => {
     const fetchSocialLinks = async () => {
@@ -55,7 +75,13 @@ const SocialMediaLayout = () => {
         // Directly calculate active count from fetched data
         const totalActiveSocialCount = response.data.data.filter(link => link.isActive).length;
 
-        response.data.data.forEach(link => {
+        // Sort the data by createdAt or platform to maintain consistent order
+        const sortedData = [...response.data.data].sort((a, b) => {
+          // Sort by platform name for consistent order
+          return a.platform.toLowerCase().localeCompare(b.platform.toLowerCase());
+        });
+
+        sortedData.forEach(link => {
           const platform = link.platform.toLowerCase();
           const linkData = {
             id: link.id,
@@ -63,7 +89,8 @@ const SocialMediaLayout = () => {
             name: link.platform,
             region: "Social Media",
             active: link.isActive,
-            lastChecked: new Date(link.updatedAt).toISOString().split('T')[0]
+            lastChecked: new Date(link.updatedAt).toISOString().split('T')[0],
+            createdAt: new Date(link.createdAt || Date.now()).getTime() // For sorting
           };
 
           // Sort links into active (displayed) and inactive (available)
@@ -76,7 +103,7 @@ const SocialMediaLayout = () => {
 
         setDisplayedLinks(activeLinks);
         setAvailableLinks(inactiveLinks);
-        setActiveSocialCount(totalActiveSocialCount)
+        setActiveSocialCount(totalActiveSocialCount);
         setError(null);
       } catch (err) {
         setError("Failed to load social media links");
@@ -89,7 +116,6 @@ const SocialMediaLayout = () => {
     fetchSocialLinks();
   }, []);
 
-
   const handleEditClick = (platform) => {
     setEditing(platform);
     setNewLink(displayedLinks[platform].url);
@@ -97,7 +123,7 @@ const SocialMediaLayout = () => {
 
   const handleSaveClick = async () => {
     if (!isValidUrl(newLink)) {
-      alert("Please enter a valid URL");
+      toast.error("Please enter a valid URL");
       return;
     }
 
@@ -146,6 +172,77 @@ const SocialMediaLayout = () => {
       return true;
     } catch {
       return false;
+    }
+  };
+
+  // Create new social media platform
+  const handleCreateSocial = async () => {
+    if (!newPlatform) {
+      toast.error("Please select a platform");
+      return;
+    }
+
+    if (!isValidUrl(newSocialUrl)) {
+      toast.error("Please enter a valid URL");
+      return;
+    }
+
+    try {
+      setIsCreating(true);
+      
+      // Check if platform already exists in either active or inactive lists
+      const platformExists = 
+        Object.keys(displayedLinks).includes(newPlatform.toLowerCase()) ||
+        Object.keys(availableLinks).includes(newPlatform.toLowerCase());
+        
+      if (platformExists) {
+        toast.error(`${newPlatform} already exists. Please activate it or select a different platform.`);
+        setIsCreating(false);
+        return;
+      }
+
+      // Make API call to create new social media entry
+      const response = await axiosInstance.post('/social/create-social', {
+        platform: newPlatform,
+        url: newSocialUrl,
+        isActive: true // Create as active by default
+      });
+
+      if (response.data.success) {
+        // Add new platform to displayed links
+        const newSocialData = {
+          id: response.data.data.id,
+          url: response.data.data.url,
+          name: response.data.data.platform,
+          region: "Social Media",
+          active: true,
+          lastChecked: new Date().toISOString().split('T')[0],
+          createdAt: Date.now() // Add creation timestamp
+        };
+
+        setDisplayedLinks(prev => ({
+          ...prev,
+          [newPlatform.toLowerCase()]: newSocialData
+        }));
+
+        // Increment active count
+        setActiveSocialCount(prev => prev + 1);
+        
+        playNotificationSound();
+        toast.success("Social media platform added successfully!");
+        
+        // Reset form
+        setNewPlatform("");
+        setNewSocialUrl("");
+        setShowCreateSocialModal(false);
+      } else {
+        throw new Error(response.data.message || "Failed to create social media entry");
+      }
+    } catch (error) {
+      console.error("Error creating social media entry:", error);
+      toast.error(error.response?.data?.message || "Failed to create social media entry. Please try again.");
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -321,7 +418,7 @@ const SocialMediaLayout = () => {
   return (
     <div className="card w-full bg-base-200 shadow-xl">
       <div className="card-body">
-        <div className=" flex items-center justify-between">
+        <div className="flex items-center justify-between">
           <div className='space-y-1'>
             <h1 className="card-title flex items-center gap-2 text-base md:text-2xl text-neutral-content">
               <Globe className="w-6 h-6 text-accent" />
@@ -329,14 +426,25 @@ const SocialMediaLayout = () => {
             </h1>
             <p className='ml-8'>Active Social Media : {activeSocialCount} </p>
           </div>
-          {Object.keys(availableLinks).length > 0 && (
+          <div className="flex gap-2">
+            {/* Add New Platform Button */}
             <button
               className="btn btn-primary btn-sm"
-              onClick={() => setShowAddLinkModal(true)}
+              onClick={() => setShowCreateSocialModal(true)}
             >
-              <Plus className="w-4 h-4 mr-2" /> Add Link
+              <PlusCircle className="w-4 h-4 mr-2" /> Add New
             </button>
-          )}
+            
+            {/* Activate Links Button */}
+            {Object.keys(availableLinks).length > 0 && (
+              <button
+                className="btn btn-outline btn-sm"
+                onClick={() => setShowAddLinkModal(true)}
+              >
+                <Plus className="w-4 h-4 mr-2" /> Activate Links
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Table Section */}
@@ -354,7 +462,10 @@ const SocialMediaLayout = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-base-300">
-                    {Object.entries(displayedLinks).map(([platform, details]) => (
+                    {/* Sort entries by platform name for consistent display order */}
+                    {Object.entries(displayedLinks)
+                      .sort(([a], [b]) => a.localeCompare(b))
+                      .map(([platform, details]) => (
                       <tr key={platform} className="hover:bg-base-300/10">
                         <td className="px-2 py-2 sm:px-4 sm:py-3 text-neutral-content whitespace-nowrap">
                           <div className="flex items-center gap-2">
@@ -387,7 +498,8 @@ const SocialMediaLayout = () => {
                               </span>
                               <button
                                 onClick={() => copyToClipboard(details.url)}
-                                className="btn btn-ghost btn-xs"
+                                className="btn btn-ghost btn-xs tooltip tooltip-left"
+                                data-tip="Copy link"
                               >
                                 <LinkIcon className="w-3 h-3 sm:w-4 sm:h-4" />
                               </button>
@@ -395,13 +507,15 @@ const SocialMediaLayout = () => {
                           )}
                         </td>
                         <td className="px-2 py-2 sm:px-4 sm:py-3 text-center">
-                          <button
-                            onClick={() => handleToggleStatus(platform)}
-                            className="badge badge-sm badge-success text-xs focus:outline-none"
-                            disabled={isDeactivating && platformToToggle === platform}
-                          >
-                            Active
-                          </button>
+                          <div className="tooltip tooltip-left" data-tip="Click to set inactive">
+                            <button
+                              onClick={() => handleToggleStatus(platform)}
+                              className="badge badge-sm badge-success text-xs focus:outline-none hover:bg-green-600 transition-colors"
+                              disabled={isDeactivating && platformToToggle === platform}
+                            >
+                              Active
+                            </button>
+                          </div>
                         </td>
                         <td className="px-2 py-2 sm:px-4 sm:py-3 text-right">
                           {editing === platform ? (
@@ -428,7 +542,8 @@ const SocialMediaLayout = () => {
                             </div>
                           ) : (
                             <button
-                              className="btn btn-primary btn-xs"
+                              className="btn btn-primary btn-xs tooltip tooltip-left"
+                              data-tip="Edit URL"
                               onClick={() => handleEditClick(platform)}
                             >
                               Edit
@@ -441,7 +556,7 @@ const SocialMediaLayout = () => {
                 </table>
               ) : (
                 <div className="p-6 text-center">
-                  <p className="text-neutral-content opacity-70">No active social media links. Add one using the "Add Link" button.</p>
+                  <p className="text-neutral-content opacity-70">No active social media links. Add one using the "Add New" button.</p>
                 </div>
               )}
             </div>
@@ -449,18 +564,21 @@ const SocialMediaLayout = () => {
         </div>
       </div>
 
-      {/* Add Link Modal - Now showing inactive social media with activation option */}
+      {/* Add Link Modal (Activate Links) - Now showing inactive social media with activation option */}
       {showAddLinkModal && (
         <div className="modal modal-open">
           <div className="modal-box w-11/12 max-w-sm sm:max-w-md p-4">
-            <h3 className="font-bold text-lg mb-4">Add Social Media Link</h3>
+            <h3 className="font-bold text-lg mb-4">Activate Social Media Link</h3>
             {Object.keys(availableLinks).length > 0 ? (
               <div className="grid grid-cols-1 gap-3">
-                {Object.entries(availableLinks).map(([platform, details]) => (
+                {Object.entries(availableLinks)
+                  .sort(([a], [b]) => a.localeCompare(b))
+                  .map(([platform, details]) => (
                   <button
                     key={platform}
                     onClick={() => handleActivateSocial(platform)}
-                    className="btn btn-outline flex items-center justify-start gap-3 text-sm"
+                    className="btn btn-outline flex items-center justify-start gap-3 text-sm tooltip"
+                    data-tip="Click to activate this platform"
                     disabled={isActivating && platformToToggle === platform}
                   >
                     {platformIcons[platform]}
@@ -482,6 +600,115 @@ const SocialMediaLayout = () => {
             </div>
           </div>
           <div className="modal-backdrop" onClick={() => setShowAddLinkModal(false)}></div>
+        </div>
+      )}
+
+      {/* Create New Social Media Modal */}
+      {showCreateSocialModal && (
+        <div className="modal modal-open">
+          <div className="modal-box w-11/12 max-w-sm sm:max-w-md p-4">
+            <h3 className="font-bold text-lg mb-4">Add New Social Media</h3>
+            <div className="form-control w-full mb-4">
+              <label className="label">
+                <span className="label-text">Platform</span>
+              </label>
+              <div className="relative">
+                <select 
+                  className="select select-bordered w-full" 
+                  value={newPlatform}
+                  onChange={(e) => setNewPlatform(e.target.value)}
+                >
+                  <option value="" disabled>Select platform</option>
+                  {platformOptions.map(option => {
+                    const isDisabled = 
+                      Object.keys(displayedLinks).includes(option.value) ||
+                      Object.keys(availableLinks).includes(option.value);
+                    
+                    return (
+                      <option 
+                        key={option.value} 
+                        value={option.value}
+                        disabled={isDisabled}
+                      >
+                        {option.label} {isDisabled ? "(Already exists)" : ""}
+                      </option>
+                    );
+                  })}
+                </select>
+                {newPlatform && (
+                  <div className="absolute top-1/2 right-10 -translate-y-1/2">
+                    {platformIcons[newPlatform]}
+                  </div>
+                )}
+              </div>
+              <label className="label">
+                <span className="label-text-alt text-info">Select a social media platform to add</span>
+              </label>
+            </div>
+            <div className="form-control w-full mb-4">
+              <label className="label">
+                <span className="label-text">URL</span>
+              </label>
+              <div className="input-group">
+                <input 
+                  type="text" 
+                  className="input input-bordered w-full" 
+                  placeholder={newPlatform ? `https://${newPlatform}.com/profile` : "https://example.com/profile"}
+                  value={newSocialUrl}
+                  onChange={(e) => setNewSocialUrl(e.target.value)}
+                />
+                {newSocialUrl && (
+                  <button 
+                    className="btn btn-square btn-ghost" 
+                    type="button"
+                    onClick={() => window.open(isValidUrl(newSocialUrl) ? newSocialUrl : `https://${newSocialUrl}`, '_blank')}
+                    disabled={!newSocialUrl}
+                    title="Test link"
+                  >
+                    <Globe className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+              <label className="label">
+                <span className="label-text-alt text-info">Enter the full URL including https://</span>
+                {newSocialUrl && !isValidUrl(newSocialUrl) && (
+                  <span className="label-text-alt text-error">Please enter a valid URL</span>
+                )}
+              </label>
+            </div>
+            <div className="modal-action">
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => {
+                  setShowCreateSocialModal(false);
+                  setNewPlatform("");
+                  setNewSocialUrl("");
+                }}
+                disabled={isCreating}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={handleCreateSocial}
+                disabled={isCreating || !newPlatform || !newSocialUrl}
+              >
+                {isCreating ? (
+                  <span className="flex items-center">
+                    <Loader className="w-3 h-3 mr-1 animate-spin" />
+                    Creating
+                  </span>
+                ) : "Create"}
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => {
+            if (!isCreating) {
+              setShowCreateSocialModal(false);
+              setNewPlatform("");
+              setNewSocialUrl("");
+            }
+          }}></div>
         </div>
       )}
 
