@@ -59,8 +59,7 @@ export const SocketProvider = ({ children }) => {
   useEffect(() => {
     // Initialize socket connection
 
-      const baseURL= import.meta.env.VITE_API_BASE_URL
-
+      const baseURL= import.meta.env.VITE_API_BASE_URL    
     const socketInstance = io(baseURL);
     // const socketInstance = io('http://localhost:8080');
 

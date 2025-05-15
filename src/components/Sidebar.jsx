@@ -149,7 +149,7 @@ useEffect(() => {
         {
             section: "Marketing",
             items: [
-                // { name: 'Newsletters', path: '/newsletters', icon: Newspaper, count: count.newsletters },
+                { name: 'Newsletters', path: '/newsletters', icon: Newspaper, count: count.newsletters },
                 // { name: 'Comments', path: '/comments', icon: MessageSquare, count: count.comments },
                 { name: 'Testimonials', path: '/testimonials', icon: MessageSquare, count: count.testimonials },
                 { name: 'Social Media', path: '/social', icon: Globe, count: count.socialMedia },
