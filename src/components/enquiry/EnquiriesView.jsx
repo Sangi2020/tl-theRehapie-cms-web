@@ -401,14 +401,14 @@ const EnquiriesView = () => {
 
       const response = await axiosInstance.get(`/enquiries/get-all-enquiries?${queryParams}`);
       
-const formattedEnquiries = response.data.enquiries.map((enquiry) => ({
-  ...enquiry,
-  phoneNumber: enquiry.phoneNumber.length > 2 
-    ? enquiry.phoneNumber.slice(0, 2) + " " + enquiry.phoneNumber.slice(2) 
-    : enquiry.phoneNumber,
-}));
+// const formattedEnquiries = response.data.enquiries.map((enquiry) => ({
+//   ...enquiry,
+//   phoneNumber: enquiry.phoneNumber.length > 2 
+//     ? enquiry.phoneNumber.slice(0, 2) + " " + enquiry.phoneNumber.slice(2) 
+//     : enquiry.phoneNumber,
+// }));
 
-setEnquiries(formattedEnquiries);   
+setEnquiries(response.data.enquiries);   
       setPagination(response.data.pagination);
       setEnquiryCount(response.data.totalEnquiryCount)
     } catch (error) {
