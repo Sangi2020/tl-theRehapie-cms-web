@@ -131,7 +131,7 @@ useEffect(() => {
                 // { name: 'Case Studies', path: '/case-study', icon: BookOpenCheck, count: count.cases },
                 // { name: 'Careers', path: '/career', icon: UserCog, count: count.carrers },
                 { name: 'Blogs', path: '/blog', icon: PenTool, count: count.blogs },
-                // { name: 'Compliance', path: '/documents', icon: FileText },
+                { name: 'Compliance', path: '/documents', icon: FileText },
                 { name: 'SEO Editor', path: '/seo-editor', icon: Layers },
                 // { name: 'Team Management', path: '/team', icon: Users, count: count.team },
                 { name: 'FAQs', path: '/faqs', icon: FileQuestion, count: count.faqs },
