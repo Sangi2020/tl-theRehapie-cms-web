@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Pencil, Trash2, Star, ChevronRight, ChevronLeft, Loader } from 'lucide-react';
+import { Plus, Pencil, Trash2, ChevronRight, ChevronLeft, Loader } from 'lucide-react';
 import axiosInstance from '../../config/axios';
 import TestimonialForm from './TestimonialForm';
 import { toast } from 'react-toastify';
@@ -124,12 +124,8 @@ const TestimonialLayout = () => {
                       <p className="text-base-content">
                         {testimonial.text} - <span className="text-sm opacity-70 ml-2">{testimonial.position}</span>
                       </p>
-                      
-                      <div className="flex items-center space-x-1 mt-2">
-                        {[...Array(testimonial.rating)].map((_, i) => (
-                          <Star key={i} className="w-4 h-4 fill-warning text-warning" />
-                        ))}
-                      </div>
+                      <div className="text-sm text-slate-500 font-bold ">{testimonial.TestimonialUrl}</div>
+
                     </div>
                     <div className="flex items-center space-x-2">
                       <button
