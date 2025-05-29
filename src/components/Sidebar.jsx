@@ -135,7 +135,7 @@ useEffect(() => {
                 { name: 'SEO Editor', path: '/seo-editor', icon: Layers },
                 // { name: 'Team Management', path: '/team', icon: Users, count: count.team },
                 { name: 'FAQs', path: '/faqs', icon: FileQuestion, count: count.faqs },
-                // { name: 'Services', path: '/services', icon: BriefcaseBusiness, count: count.services },
+                { name: 'Services', path: '/services', icon: BriefcaseBusiness, count: count.services },
                 { name: 'Organization Details', path: '/organization-details', icon: Info, },
             ]
         },

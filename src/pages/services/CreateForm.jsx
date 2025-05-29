@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { toast } from "react-toastify";
 import axiosInstance from "../../config/axios";
@@ -6,10 +5,9 @@ import playNotificationSound from "../../utils/playNotification";
 
 function ServiceForm({ onServiceCreated, initialData, mode, setIsDrawerOpen }) {
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
   const [tagline, setTagline] = useState("");
   const [taglinedescription, setTaglineDescription] = useState("");
-  const [points, setPoints] = useState([""]);
+  const [points, setPoints] = useState([{ heading: '', description: '' }]);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -19,17 +17,15 @@ function ServiceForm({ onServiceCreated, initialData, mode, setIsDrawerOpen }) {
   useEffect(() => {
     if (mode === "edit" && initialData) {
       setTitle(initialData.title || "");
-      setDescription(initialData.shortDescription || "");
       setTagline(initialData.tagline || "");
-      setTaglineDescription(initialData.taglinedescription || "")
-      setPoints(initialData.points || [""]);
+      setTaglineDescription(initialData.taglinedescription || "");
+      setPoints(initialData.points || [{ heading: '', description: '' }]);
       setImagePreview(initialData.image || null);
     } else {
       setTitle("");
-      setDescription("");
       setTagline("");
-      setTaglineDescription("")
-      setPoints([""]);
+      setTaglineDescription("");
+      setPoints([{ heading: '', description: '' }]);
       setImageFile(null);
       setImagePreview(null);
     }
@@ -44,14 +40,13 @@ function ServiceForm({ onServiceCreated, initialData, mode, setIsDrawerOpen }) {
         return value.trim().length >= 3 
           ? null 
           : "Title must be at least 3 characters long";
-      case 'description':
-        return value.trim().length >= 10 
-          ? null 
-          : "Description must be at least 10 characters long";
       case 'points':
-        return value.every(point => point.trim().length >= 5)
+        return value.every(point =>
+          point.heading.trim().length >= 3 &&
+          point.description.trim().length >= 10
+        )
           ? null
-          : "Each point must be at least 5 characters long";
+          : "Each heading must be at least 3 characters and each description at least 10 characters long";
       case 'image':
         // Skip image validation in edit mode if no new image is provided
         if (mode === 'edit' && (value === undefined || value === null)) {
@@ -114,36 +109,21 @@ function ServiceForm({ onServiceCreated, initialData, mode, setIsDrawerOpen }) {
       ...prev,
       image: "Image is required"
     }));
-    
   };
 
-  const handlePointChange = (index, value) => {
-    const newPoints = [...points];
-    newPoints[index] = value;
-    setPoints(newPoints);
-    
-    // Validate points
-    const pointError = validateField('points', newPoints,mode);
-    setErrors(prev => ({
-      ...prev,
-      points: pointError
-    }));
+  const handlePointChange = (index, field, value) => {
+    const updatedPoints = [...points];
+    updatedPoints[index][field] = value;
+    setPoints(updatedPoints);
   };
-
-  const addPoint = () => setPoints([...points, ""]);
-
+  
+  const addPoint = () => {
+    setPoints([...points, { heading: '', description: '' }]);
+  };
+  
   const removePoint = (index) => {
-    if (points.length > 1) {
-      const newPoints = points.filter((_, i) => i !== index);
-      setPoints(newPoints);
-      
-      // Revalidate points
-      const pointError = validateField('points', newPoints,mode);
-      setErrors(prev => ({
-        ...prev,
-        points: pointError
-      }));
-    }
+    const updatedPoints = points.filter((_, i) => i !== index);
+    setPoints(updatedPoints);
   };
 
   const handleSubmit = async (event) => {
@@ -156,19 +136,16 @@ function ServiceForm({ onServiceCreated, initialData, mode, setIsDrawerOpen }) {
     const titleError = validateField('title', title);
     if (titleError) newErrors.title = titleError;
 
-    const descriptionError = validateField('description', description,mode);
-    if (descriptionError) newErrors.description = descriptionError;
-
-    const pointsError = validateField('points', points,mode);
+    const pointsError = validateField('points', points, mode);
     if (pointsError) newErrors.points = pointsError;
 
-    const imageError = validateField('image', imageFile,mode);
+    const imageError = validateField('image', imageFile, mode);
     if (imageError) newErrors.image = imageError;
 
-    const taglineError = validateField('tagline', tagline,mode);
+    const taglineError = validateField('tagline', tagline, mode);
     if (taglineError) newErrors.tagline = taglineError;
 
-    const taglineDescriptionError = validateField('taglinedescription', taglinedescription,mode);
+    const taglineDescriptionError = validateField('taglinedescription', taglinedescription, mode);
     if (taglineDescriptionError) newErrors.taglinedescription = taglineDescriptionError;
 
     // If there are any errors, set them and prevent submission
@@ -185,7 +162,6 @@ function ServiceForm({ onServiceCreated, initialData, mode, setIsDrawerOpen }) {
 
       const formData = new FormData();
       formData.append("title", title);
-      formData.append("shortDescription", description);
       formData.append("tagline", tagline);
       formData.append("taglineDescription", taglinedescription);
       formData.append("servicePoints", JSON.stringify(points));
@@ -196,14 +172,14 @@ function ServiceForm({ onServiceCreated, initialData, mode, setIsDrawerOpen }) {
 
       let response;
       if (mode === "add") {
-        if(!imagePreview)return
+        if(!imagePreview) return;
         response = await axiosInstance.post("/service/create-service", formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        playNotificationSound()
+        playNotificationSound();
         toast.success("Service added successfully!");
       } else if (mode === "edit" && initialData) {
-        if(!imagePreview)return
+        if(!imagePreview) return;
 
         response = await axiosInstance.put(
           `/service/update-service/${initialData.id}`,
@@ -219,10 +195,9 @@ function ServiceForm({ onServiceCreated, initialData, mode, setIsDrawerOpen }) {
 
       // Reset form on success
       setTitle("");
-      setDescription("");
       setTagline("");
-      setTaglineDescription("")
-      setPoints([""]);
+      setTaglineDescription("");
+      setPoints([{ heading: '', description: '' }]);
       setImageFile(null);
       setImagePreview(null);
       setIsDrawerOpen(false);
@@ -248,7 +223,7 @@ function ServiceForm({ onServiceCreated, initialData, mode, setIsDrawerOpen }) {
           value={title}
           onChange={(e) => {
             setTitle(e.target.value);
-            const titleError = validateField('title', e.target.value,mode);
+            const titleError = validateField('title', e.target.value, mode);
             setErrors(prev => ({
               ...prev,
               title: titleError
@@ -258,30 +233,9 @@ function ServiceForm({ onServiceCreated, initialData, mode, setIsDrawerOpen }) {
         {errors.title && <p className="text-error text-sm mt-1">{errors.title}</p>}
       </div>
 
-      {/* Description */}
-      <div>
-        <label className="block font-medium">
-          Description <span className="text-error">*</span>
-        </label>
-        <textarea
-          className={`textarea textarea-bordered w-full ${errors.description ? 'textarea-error' : ''}`}
-          placeholder="Service description..."
-          value={description}
-          onChange={(e) => {
-            setDescription(e.target.value);
-            const descriptionError = validateField('description', e.target.value,mode);
-            setErrors(prev => ({
-              ...prev,
-              description: descriptionError
-            }));
-          }}
-        ></textarea>
-        {errors.description && <p className="text-error text-sm mt-1">{errors.description}</p>}
-      </div>
-
       {/* Tagline */}
       <div>
-        <label className="block font-medium">Tagline</label>
+        <label className="block font-medium">Tagline <span className="text-error">*</span></label>
         <input
           type="text"
           placeholder="Short tagline..."
@@ -289,7 +243,7 @@ function ServiceForm({ onServiceCreated, initialData, mode, setIsDrawerOpen }) {
           value={tagline}
           onChange={(e) => {
             setTagline(e.target.value);
-            const taglineError = validateField('tagline', e.target.value,mode);
+            const taglineError = validateField('tagline', e.target.value, mode);
             setErrors(prev => ({
               ...prev,
               tagline: taglineError
@@ -308,7 +262,7 @@ function ServiceForm({ onServiceCreated, initialData, mode, setIsDrawerOpen }) {
           value={taglinedescription}
           onChange={(e) => {
             setTaglineDescription(e.target.value);
-            const taglineDescriptionError = validateField('taglinedescription', e.target.value,mode);
+            const taglineDescriptionError = validateField('taglinedescription', e.target.value, mode);
             setErrors(prev => ({
               ...prev,
               taglinedescription: taglineDescriptionError
@@ -322,26 +276,34 @@ function ServiceForm({ onServiceCreated, initialData, mode, setIsDrawerOpen }) {
       {/* Bullet Points */}
       <div>
         <label className="block font-medium">
-          Bullet Points <span className="text-error">*</span>
+          Key Points <span className="text-error">*</span>
         </label>
         {points.map((point, index) => (
-          <div key={index} className="flex items-center space-x-2 mb-2">
-            <input
-              type="text"
-              className={`input input-bordered w-full ${errors.points ? 'input-error' : ''}`}
-              placeholder={`Point ${index + 1}`}
-              value={point}
-              onChange={(e) => handlePointChange(index, e.target.value)}
+          <div key={index} className="mb-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <input
+                type="text"
+                className={`input input-bordered w-full ${errors.points ? 'input-error' : ''}`}
+                placeholder={`Heading ${index + 1}`}
+                value={point.heading}
+                onChange={(e) => handlePointChange(index, 'heading', e.target.value)}
+              />
+              {points.length > 1 && (
+                <button
+                  type="button"
+                  className="btn btn-error btn-xs"
+                  onClick={() => removePoint(index)}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            <textarea
+              className={`textarea textarea-bordered w-full ${errors.points ? 'textarea-error' : ''}`}
+              placeholder={`Description ${index + 1}`}
+              value={point.description}
+              onChange={(e) => handlePointChange(index, 'description', e.target.value)}
             />
-            {points.length > 1 && (
-              <button
-                type="button"
-                className="btn btn-error btn-xs"
-                onClick={() => removePoint(index)}
-              >
-                ✕
-              </button>
-            )}
           </div>
         ))}
         {errors.points && <p className="text-error text-sm mt-1">{errors.points}</p>}
