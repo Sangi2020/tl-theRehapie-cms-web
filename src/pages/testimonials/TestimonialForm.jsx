@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Star } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosInstance from '../../config/axios';
 import playNotificationSound from '../../utils/playNotification';
@@ -9,7 +8,7 @@ function TestimonialForm({ onTestimonialCreated, initialData, mode, setIsDrawerO
     text: '',
     author: '',
     position: '',
-    rating: 5
+    TestimonialUrl: ''
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,14 +19,14 @@ function TestimonialForm({ onTestimonialCreated, initialData, mode, setIsDrawerO
         text: initialData.text || '',
         author: initialData.author || '',
         position: initialData.position || '',
-        rating: initialData.rating || 5
+        TestimonialUrl: initialData.TestimonialUrl || ''
       });
     } else if (mode === "add") {
       setTestimonial({
         text: '',
         author: '',
         position: '',
-        rating: 5
+        TestimonialUrl: ''
       });
     }
     // Reset errors and submission state
@@ -38,10 +37,14 @@ function TestimonialForm({ onTestimonialCreated, initialData, mode, setIsDrawerO
   const validateField = (name, value) => {
     switch (name) {
       case 'author':
+        // Author is optional, but if provided, it should be valid
+        if (!value || value.trim() === '') return null;
         return /^[a-zA-Z\s]+$/.test(value) && value.trim().length >= 2
           ? null
-          : "Author name must be at least 2 characters long and contain only letters ";      
+          : "Author name must be at least 2 characters long and contain only letters";
       case 'position':
+        // Position is optional, but if provided, it should be valid
+        if (!value || value.trim() === '') return null;
         return value.trim().length >= 2
           ? null
           : "Position must be at least 2 characters long";
@@ -51,23 +54,26 @@ function TestimonialForm({ onTestimonialCreated, initialData, mode, setIsDrawerO
           ? null
           : "Testimonial must be between 10 and 110 words long";
       }
-      case 'rating':
-        return value >= 1 && value <= 5
-          ? null
-          : "Rating must be between 1 and 5";
+      case 'TestimonialUrl':
+        // URL is optional, but if provided, it should be a valid URL
+        if (!value || value.trim() === '') return null;
+        try {
+          new URL(value);
+          return null;
+        } catch {
+          return "Please enter a valid URL (e.g., https://example.com)";
+        }
       default:
         return null;
     }
   };
-  
-  
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
     // Validate all fields
     const newErrors = {};
-    
+
     const authorError = validateField('author', testimonial.author);
     if (authorError) newErrors.author = authorError;
 
@@ -77,8 +83,8 @@ function TestimonialForm({ onTestimonialCreated, initialData, mode, setIsDrawerO
     const textError = validateField('text', testimonial.text);
     if (textError) newErrors.text = textError;
 
-    const ratingError = validateField('rating', testimonial.rating);
-    if (ratingError) newErrors.rating = ratingError;
+    const testimonialUrlError = validateField('TestimonialUrl', testimonial.TestimonialUrl);
+    if (testimonialUrlError) newErrors.TestimonialUrl = testimonialUrlError;
 
     // If there are any errors, set them and prevent submission
     if (Object.keys(newErrors).length > 0) {
@@ -110,7 +116,7 @@ function TestimonialForm({ onTestimonialCreated, initialData, mode, setIsDrawerO
         text: '',
         author: '',
         position: '',
-        rating: 5
+        TestimonialUrl: ''
       });
       setIsDrawerOpen(false);
     } catch (error) {
@@ -122,31 +128,11 @@ function TestimonialForm({ onTestimonialCreated, initialData, mode, setIsDrawerO
     }
   };
 
-  const renderStars = () => {
-    return [...Array(5)].map((_, index) => (
-      <Star
-        key={index}
-        className={`w-6 h-6 cursor-pointer ${
-          index < testimonial.rating ? 'fill-warning text-warning' : 'text-gray-300'
-        }`}
-        onClick={() => {
-          const newRating = index + 1;
-          setTestimonial({ ...testimonial, rating: newRating });
-          // Clear any previous rating errors
-          setErrors(prev => {
-            const { rating, ...rest } = prev;
-            return rest;
-          });
-        }}
-      />
-    ));
-  };
-
   return (
     <form onSubmit={handleSubmit}>
       <div className="mb-4">
         <label className="block text-sm font-medium mb-1">
-          Author Name <span className="text-error">*</span>
+          Author Name
         </label>
         <input
           type="text"
@@ -156,7 +142,7 @@ function TestimonialForm({ onTestimonialCreated, initialData, mode, setIsDrawerO
           onChange={(e) => {
             const newAuthor = e.target.value;
             setTestimonial({ ...testimonial, author: newAuthor });
-            
+
             // Validate and clear error if valid
             const authorError = validateField('author', newAuthor);
             setErrors(prev => ({
@@ -170,7 +156,7 @@ function TestimonialForm({ onTestimonialCreated, initialData, mode, setIsDrawerO
 
       <div className="mb-4">
         <label className="block text-sm font-medium mb-1">
-          Position <span className="text-error">*</span>
+          Position
         </label>
         <input
           type="text"
@@ -180,8 +166,7 @@ function TestimonialForm({ onTestimonialCreated, initialData, mode, setIsDrawerO
           onChange={(e) => {
             const newPosition = e.target.value;
             setTestimonial({ ...testimonial, position: newPosition });
-            
-            // Validate and clear error if valid
+
             const positionError = validateField('position', newPosition);
             setErrors(prev => ({
               ...prev,
@@ -194,12 +179,25 @@ function TestimonialForm({ onTestimonialCreated, initialData, mode, setIsDrawerO
 
       <div className="mb-4">
         <label className="block text-sm font-medium mb-1">
-          Rating <span className="text-error">*</span>
+          Testimonial URL
         </label>
-        <div className="flex space-x-1">
-          {renderStars()}
-        </div>
-        {errors.rating && <p className="text-error text-sm mt-1">{errors.rating}</p>}
+        <input
+          type="url"
+          placeholder="Enter testimonial URL"
+          className={`input input-bordered w-full ${errors.TestimonialUrl ? 'input-error' : ''}`}
+          value={testimonial.TestimonialUrl}
+          onChange={(e) => {
+            const newUrl = e.target.value;
+            setTestimonial({ ...testimonial, TestimonialUrl: newUrl });
+
+            const urlError = validateField('TestimonialUrl', newUrl);
+            setErrors(prev => ({
+              ...prev,
+              TestimonialUrl: urlError
+            }));
+          }}
+        />
+        {errors.TestimonialUrl && <p className="text-error text-sm mt-1">{errors.TestimonialUrl}</p>}
       </div>
 
       <div className="mb-4">
@@ -214,7 +212,7 @@ function TestimonialForm({ onTestimonialCreated, initialData, mode, setIsDrawerO
           onChange={(e) => {
             const newText = e.target.value;
             setTestimonial({ ...testimonial, text: newText });
-            
+
             // Validate and clear error if valid
             const textError = validateField('text', newText);
             setErrors(prev => ({
@@ -226,8 +224,8 @@ function TestimonialForm({ onTestimonialCreated, initialData, mode, setIsDrawerO
         {errors.text && <p className="text-error text-sm mt-1">{errors.text}</p>}
       </div>
 
-      <button 
-        type="submit" 
+      <button
+        type="submit"
         className="btn btn-primary w-full"
         disabled={isSubmitting}
       >

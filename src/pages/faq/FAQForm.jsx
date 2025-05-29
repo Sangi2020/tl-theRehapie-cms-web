@@ -1,29 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
+import { Home } from 'lucide-react';
 import axiosInstance from '../../config/axios';
 import playNotificationSound from '../../utils/playNotification';
 
-function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs }) {
+function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs, homeFaqs }) {
   const [faq, setFaq] = useState({
     question: '',
-    answer: ''
+    answer: '',
+    isHomeFaq: false
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Log faqs prop to check if it's being properly passed
-  useEffect(() => {
+  // Check if Home FAQ toggle should be disabled
+  const isHomeFaqToggleDisabled = () => {
+    if (mode === "edit" && initialData?.isHomeFaq) {
+      // If editing an existing Home FAQ, allow toggling off
+      return false;
+    }
+    // For new FAQs or editing non-Home FAQs, disable if already at limit
+    return homeFaqs?.length >= 4;
+  };
 
+  useEffect(() => {
     if (mode === "edit" && initialData) {
       setFaq({
         question: initialData.question || '',
-        answer: initialData.answer || ''
+        answer: initialData.answer || '',
+        isHomeFaq: initialData.isHomeFaq || false
       });
       console.log("Edit mode initialData:", initialData);
     } else if (mode === "add") {
       setFaq({
         question: '',
-        answer: ''
+        answer: '',
+        isHomeFaq: false
       });
     }
     // Reset errors and submission state
@@ -35,7 +47,7 @@ function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs }) {
     console.log(`Validating ${name} with value: "${value}"`);
     console.log("Available FAQs for validation:", faqs);
     
-    const wordCount = value.trim().split(/\s+/).length; // Count words
+    const wordCount = value.trim().split(/\s+/).length;
     
     switch (name) {
       case 'question':
@@ -43,14 +55,13 @@ function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs }) {
           return "Question must be at least 5 characters long";
         }
         
-        // Check if the question is a duplicate (only for new FAQs or if the question has changed)
+        // Check if the question is a duplicate
         if (faqs && Array.isArray(faqs)) {
           console.log("Checking for duplicates among", faqs.length, "existing FAQs");
           
           const duplicates = faqs.filter(
             (existingFAQ) => 
               existingFAQ.question.trim().toLowerCase() === value.trim().toLowerCase() &&
-              // Don't flag as duplicate if it's the same FAQ being edited
               (mode !== "edit" || existingFAQ.id !== initialData?.id)
           );
           
@@ -58,8 +69,6 @@ function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs }) {
             console.log("Duplicate found:", duplicates);
             return "This question already exists. Please enter a different question.";
           }
-        } else {
-          console.log("Cannot check for duplicates - faqs is not available or not an array");
         }
         
         return null;
@@ -118,7 +127,7 @@ function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs }) {
 
         console.log("Creating new FAQ with order:", nextOrder);
         response = await axiosInstance.post("/qna/create-faq", newFAQ);
-        playNotificationSound()
+        playNotificationSound();
         toast.success("FAQ created successfully!");
       } else if (mode === "edit" && initialData) {
         const updatedFAQ = {
@@ -127,7 +136,7 @@ function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs }) {
         };
         console.log("Updating FAQ with ID:", initialData.id);
         response = await axiosInstance.put(`/qna/update-faq/${initialData.id}`, updatedFAQ);
-        playNotificationSound()
+        playNotificationSound();
         toast.success("FAQ updated successfully!");
       }
 
@@ -138,7 +147,8 @@ function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs }) {
 
       setFaq({
         question: '',
-        answer: ''
+        answer: '',
+        isHomeFaq: false
       });
       setIsDrawerOpen(false);
     } catch (error) {
@@ -198,6 +208,51 @@ function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs }) {
           }}
         ></textarea>
         {errors.answer && <p className="text-error text-sm mt-1">{errors.answer}</p>}
+      </div>
+
+      {/* Home FAQ Toggle Section */}
+      <div className="mb-6 p-4 bg-base-200 rounded-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Home className="w-5 h-5 text-primary" />
+            <div>
+              <label className="block text-sm font-medium">
+                Display on Home Page
+              </label>
+              <p className="text-xs text-base-content/70">
+                Show this FAQ on the home page (Max: 4)
+              </p>
+            </div>
+          </div>
+          <div className="form-control">
+            <input
+              type="checkbox"
+              className="toggle toggle-primary"
+              checked={faq.isHomeFaq}
+              disabled={isHomeFaqToggleDisabled()}
+              onChange={(e) => {
+                setFaq({ ...faq, isHomeFaq: e.target.checked });
+              }}
+            />
+          </div>
+        </div>
+        
+        {/* Home FAQ Status */}
+        <div className="mt-2 text-xs">
+          {homeFaqs?.length >= 4 && !faq.isHomeFaq && (
+            <div className="alert alert-warning py-2">
+              <span>Home FAQ limit reached (4/4). Disable another Home FAQ to enable this option.</span>
+            </div>
+          )}
+          {/* {faq.isHomeFaq && (
+            <div className="alert alert-info py-2">
+              <span>This FAQ will be displayed on the home page</span>
+            </div>
+          )} */}
+          <span className="text-base-content/70">
+            Home FAQs: {homeFaqs?.length || 0}/4
+          </span>
+        </div>
       </div>
       
       <button 
