@@ -16,14 +16,14 @@ import { ToastContainer } from "react-toastify";
   // to build code :-  npm run build
   // created date : 7-11-2024 || created by : Arjun  || module : 1 ||
   // modified date : 7/11/2024 || modified by : Arjun || module : 1 ||
-  // modified date : 7/11/2024 || modified by : Arjun ck  || module : 1 ||
-  // Technical summary(Pre-setups) created date/by :  Arjun ||
+  // modified date : 7/11/2024 || modified by : Arjun || module : 1 ||
+  // Technical summary(Pre-setups) created date/by :  Arjun || Dasarath
   // Domain :   || 
   // Hosting :   ||
   // SSL :   ||
   // Database :  ||
 
-  // Phase summary :   || created date/by :  Arjun  ||
+  // Phase summary :   || created date/by :  Arjun  || Dasarath
   // Phase 1 :  Git hub creation  ||  
   // Phase 2 :  Development/Main page creation ||
   // Phase 3 :  Production  ||
