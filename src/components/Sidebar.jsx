@@ -127,13 +127,8 @@ function Sidebar({ isOpen, onClose, isCollapsed, setIsCollapsed }) {
             section: "Content Management",
             items: [
                 { name: 'Pages', path: '/pages', icon: Layout },
-                // { name: 'Blog Posts', path: '/posts', icon: PenTool, count: count.blogs },
-                // { name: 'Case Studies', path: '/case-study', icon: BookOpenCheck, count: count.cases },
-                // { name: 'Careers', path: '/career', icon: UserCog, count: count.carrers },
                 { name: 'Blogs', path: '/blog', icon: PenTool, count: count.blogs },
-                // { name: 'Compliance', path: '/documents', icon: FileText },
                 { name: 'SEO Editor', path: '/seo-editor', icon: Layers },
-                // { name: 'Team Management', path: '/team', icon: Users, count: count.team },
                 { name: 'FAQs', path: '/faqs', icon: FileQuestion, count: count.faqs },
                 { name: 'Services', path: '/services', icon: BriefcaseBusiness, count: count.services },
                 { name: 'Organization Details', path: '/organization-details', icon: Info, },
@@ -143,14 +138,12 @@ function Sidebar({ isOpen, onClose, isCollapsed, setIsCollapsed }) {
             section: "User Management",
             items: [
                 { name: 'Users', path: '/users', icon: Users, role: 'superadmin', count: count.users },
-                // { name: 'Roles & Permissions', path: '/roles', icon: Lock },
             ]
         },
         {
             section: "Marketing",
             items: [
                 { name: 'Newsletters', path: '/newsletters', icon: Newspaper, count: count.newsletters },
-                // { name: 'Comments', path: '/comments', icon: MessageSquare, count: count.comments },
                 { name: 'Testimonials', path: '/testimonials', icon: MessageSquare, count: count.testimonials },
                 { name: 'Social Media', path: '/social', icon: Globe, count: count.socialMedia },
             ]
