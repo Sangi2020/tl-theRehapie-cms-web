@@ -54,19 +54,19 @@ const OrganizationDetails = () => {
     const fetchData = async () => {
       try {
         const response = await axiosInstance.get('/organization/settings');
-    
-        const organizationData = response.data.data;        
+
+        const organizationData = response.data.data;
         reset({
           email: organizationData.email || '',
           location: organizationData.location || '',
           mapUrl: organizationData.mapUrl || '',
           phone: organizationData.phone || ''
         });
-        
+
         if (organizationData.logo) {
           setLogoPreview(organizationData.logo);
         }
-        
+
         if (organizationData.favicon) {
           setFaviconPreview(organizationData.favicon);
         }
@@ -77,9 +77,9 @@ const OrganizationDetails = () => {
         setIsLoading(false);
       }
     };
-  
+
     fetchData();
-  }, []); 
+  }, []);
 
   const handleLogoUpload = (event) => {
     const file = event.target.files[0];
@@ -126,16 +126,16 @@ const OrganizationDetails = () => {
   const onSubmit = async (formData) => {
     setIsLoading(true);
     const submitData = new FormData();
-  
+
     Object.entries(formData).forEach(([key, value]) => {
       submitData.append(key, value === undefined ? '' : value);
     });
-  
+
     if (logoFile) submitData.append('logo', logoFile);
     if (faviconFile) submitData.append('favicon', faviconFile);
-  
+
     const toastId = toast.loading('Saving organization details...');
-  
+
     try {
       const response = await axiosInstance.post('/organization/settings', submitData, {
         headers: {
@@ -149,7 +149,7 @@ const OrganizationDetails = () => {
         isLoading: false,
         autoClose: 3000,
       });
-  
+
       const updatedData = response.data.data;
       reset({
         email: updatedData.email || '',
@@ -157,11 +157,11 @@ const OrganizationDetails = () => {
         mapUrl: updatedData.mapUrl || '',
         phone: updatedData.phone || '',
       });
-  
+
       if (updatedData.logo) {
         setLogoPreview(updatedData.logo);
       }
-      
+
       if (updatedData.favicon) {
         setFaviconPreview(updatedData.favicon);
       }
@@ -178,21 +178,21 @@ const OrganizationDetails = () => {
     }
   };
 
-  const FormField = ({ 
-    label, 
-    name, 
-    register, 
+  const FormField = ({
+    label,
+    name,
+    register,
     control,
-    errors, 
-    type = 'text', 
+    errors,
+    type = 'text',
     placeholder,
     mandatory = false
   }) => {
     // Get the theme from your context
     const { theme } = useTheme();
-    
+
     const isDarkTheme = theme === "dark";
-    
+
     // Custom dropdown styles based on theme
     const dropdownStyles = {
       backgroundColor: isDarkTheme ? '#1a1a1a' : '#fff', // Ensures full dark theme support
@@ -208,18 +208,28 @@ const OrganizationDetails = () => {
     color: ${isDarkTheme ? '#fff' : '#000'} !important; /* Ensure visible text color */
   }
 `;
-    
+
     return (
       <div className="form-control mb-4">
         <style>{dropdownItemStyles}</style>
 
         <label className="label">
           <span className="label-text">
-            {label} 
+            {label}
             {mandatory && <span className="text-error ml-1">*</span>}
+            {name === "location" && (<span className="relative group inline-block ml-2">
+              <span className="w-5 h-5  text-white text-xs rounded-full flex items-center justify-center cursor-pointer select-none">
+                ℹ️
+              </span>
+              <span className="absolute top-full sm:left-full sm:top-1/2 sm:-translate-y-1/2 left-1/2 -translate-x-1/2  sm:translate-x-0 mt-2 sm:mt-0 p-4 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 w-[90vw] sm:w-max max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg whitespace-normal break-words z-50 shadow-lg">
+                To format the address correctly, insert <code>\n</code> where you want line breaks. <br />For example:<br />
+                <code>123 Main St\nSuite 400\nCity, Country</code>
+              </span>
+            </span>)}
+
           </span>
         </label>
-        
+
         {name === "phone" ? (
           <div>
             <Controller
@@ -227,7 +237,7 @@ const OrganizationDetails = () => {
               control={control}
               render={({ field }) => (
                 <PhoneInput
-                  country={'in'}
+                  country={'ae'}
                   enableSearch={false}
                   disableSearchIcon={true}
                   value={field.value}
@@ -278,7 +288,7 @@ const OrganizationDetails = () => {
       </div>
     );
   };
-  
+
   return (
     <div className="p-6 bg-base-100 rounded-lg space-y-6">
       <div className="flex items-center gap-3">
@@ -362,39 +372,39 @@ const OrganizationDetails = () => {
               </div>
             </div>
 
-            <FormField 
-              label="Email" 
-              name="email" 
-              register={register} 
-              errors={errors} 
+            <FormField
+              label="Email"
+              name="email"
+              register={register}
+              errors={errors}
               placeholder="Ex: your@email.com"
               mandatory={true}
             />
 
-            <FormField 
-              label="Phone" 
-              name="phone" 
-              register={register} 
+            <FormField
+              label="Phone"
+              name="phone"
+              register={register}
               control={control}
-              errors={errors} 
+              errors={errors}
               placeholder="Ex: 1234567890"
               mandatory={true}
             />
 
-            <FormField 
-              label="Location" 
-              name="location" 
-              register={register} 
-              errors={errors} 
+            <FormField
+              label="Location"
+              name="location"
+              register={register}
+              errors={errors}
               placeholder="Ex: New York, USA"
               mandatory={true}
             />
 
-            <FormField 
-              label="Map URL" 
-              name="mapUrl" 
-              register={register} 
-              errors={errors} 
+            <FormField
+              label="Map URL"
+              name="mapUrl"
+              register={register}
+              errors={errors}
               placeholder="Ex: https://maps.google.com/..."
               mandatory={true}
             />
@@ -402,9 +412,8 @@ const OrganizationDetails = () => {
           <div className="flex justify-end mt-6">
             <button
               type="submit"
-              className={`btn ${isLoading ? 'btn-disabled' : 'btn-primary'} ${
-                isLoading ? 'loading' : ''
-              }`}
+              className={`btn ${isLoading ? 'btn-disabled' : 'btn-primary'} ${isLoading ? 'loading' : ''
+                }`}
             >
               Save
             </button>

@@ -112,10 +112,10 @@ const EnquiryItem = ({ enquiry, onStatusChange, onDelete }) => {
                     <Mail className="w-4 h-4" />
                     {enquiry.email}
                   </span>
-                  <span className="flex items-center gap-1">
+                  {/* <span className="flex items-center gap-1">
                     <Phone className="w-4 h-4" />
                     +{enquiry.phoneNumber}
-                  </span>
+                  </span> */}
                   <span className="flex items-center gap-1">
                     <Clock className="w-4 h-4" />
                     {format(new Date(enquiry.createdAt), 'PPp')}
