@@ -69,49 +69,49 @@ function Sidebar({ isOpen, onClose, isCollapsed, setIsCollapsed }) {
     const { authState } = useAuth();
 
 
- // In your Sidebar.jsx file, update the useEffect hook:
+    // In your Sidebar.jsx file, update the useEffect hook:
 
-useEffect(() => {
-    const fetchCounts = async () => {
-        try {
-            // Update the endpoint to match your backend route
-            const { data } = await axiosInstance.get('/stats/total-counts');
-            if (data.success && data.counts) {
-                setCount({
-                    enquiries: data.counts.enquiries?.unread || 0,
-                    comments: 0, // Not provided by your API currently
-                    notifications: data.counts.notifications?.unread || 0,
-                    blogs: data.counts.blogs?.total || 0,
-                    cases: data.counts.cases?.total || 0,
-                    carrers: 0, // Not provided by your current API
-                    services: data.counts.services?.total || 0,
-                    youTubeVideo: data.counts.youTubeVideo?.total || 0,
-                    users: data.counts.users?.total || 0,
-                    faqs: data.counts.faqs?.total || 0,
-                    testimonials: data.counts.testimonials?.total || 0,
-                    newsletters: data.counts.newsletter?.subscribers || 0,
-                    clients: data.counts.clients?.total || 0,
-                    socialMedia: data.counts.social?.active || 0,
-                });
-                
-                // Optional: Log cache status in development
-                if (process.env.NODE_ENV === 'development') {
-                    console.log(`Stats loaded: ${data.meta?.cached ? 'cached data' : 'fresh data'}`);
+    useEffect(() => {
+        const fetchCounts = async () => {
+            try {
+                // Update the endpoint to match your backend route
+                const { data } = await axiosInstance.get('/stats/total-counts');
+                if (data.success && data.counts) {
+                    setCount({
+                        enquiries: data.counts.enquiries?.unread || 0,
+                        comments: 0, // Not provided by your API currently
+                        notifications: data.counts.notifications?.unread || 0,
+                        blogs: data.counts.blogs?.total || 0,
+                        cases: data.counts.cases?.total || 0,
+                        carrers: 0, // Not provided by your current API
+                        services: data.counts.services?.total || 0,
+                        youTubeVideo: data.counts.youTubeVideo?.total || 0,
+                        users: data.counts.users?.total || 0,
+                        faqs: data.counts.faqs?.total || 0,
+                        testimonials: data.counts.testimonials?.total || 0,
+                        newsletters: data.counts.newsletter?.subscribers || 0,
+                        clients: data.counts.clients?.total || 0,
+                        socialMedia: data.counts.social?.active || 0,
+                    });
+
+                    // Optional: Log cache status in development
+                    if (process.env.NODE_ENV === 'development') {
+                        console.log(`Stats loaded: ${data.meta?.cached ? 'cached data' : 'fresh data'}`);
+                    }
                 }
+            } catch (error) {
+                console.error('Error fetching sidebar counts:', error);
+                // Keep the previous state on error
+                setCount(prevCount => prevCount);
             }
-        } catch (error) {
-            console.error('Error fetching sidebar counts:', error);
-            // Keep the previous state on error
-            setCount(prevCount => prevCount);
-        }
-    };
+        };
 
-    fetchCounts();
+        fetchCounts();
 
-    const interval = setInterval(fetchCounts, 60000); // Refresh every minute
+        const interval = setInterval(fetchCounts, 60000); // Refresh every minute
 
-    return () => clearInterval(interval);
-}, []);
+        return () => clearInterval(interval);
+    }, []);
 
 
     const navigation = [
@@ -127,15 +127,11 @@ useEffect(() => {
             section: "Content Management",
             items: [
                 { name: 'Pages', path: '/pages', icon: Layout },
-                // { name: 'Blog Posts', path: '/posts', icon: PenTool, count: count.blogs },
-                // { name: 'Case Studies', path: '/case-study', icon: BookOpenCheck, count: count.cases },
-                // { name: 'Careers', path: '/career', icon: UserCog, count: count.carrers },
                 { name: 'Blogs', path: '/blog', icon: PenTool, count: count.blogs },
                 { name: 'Compliance', path: '/documents', icon: FileText },
                 { name: 'SEO Editor', path: '/seo-editor', icon: Layers },
-                // { name: 'Team Management', path: '/team', icon: Users, count: count.team },
                 { name: 'FAQs', path: '/faqs', icon: FileQuestion, count: count.faqs },
-                // { name: 'Services', path: '/services', icon: BriefcaseBusiness, count: count.services },
+                { name: 'Services', path: '/services', icon: BriefcaseBusiness, count: count.services },
                 { name: 'Organization Details', path: '/organization-details', icon: Info, },
             ]
         },
@@ -143,14 +139,12 @@ useEffect(() => {
             section: "User Management",
             items: [
                 { name: 'Users', path: '/users', icon: Users, role: 'superadmin', count: count.users },
-                // { name: 'Roles & Permissions', path: '/roles', icon: Lock },
             ]
         },
         {
             section: "Marketing",
             items: [
                 { name: 'Newsletters', path: '/newsletters', icon: Newspaper, count: count.newsletters },
-                // { name: 'Comments', path: '/comments', icon: MessageSquare, count: count.comments },
                 { name: 'Testimonials', path: '/testimonials', icon: MessageSquare, count: count.testimonials },
                 { name: 'Social Media', path: '/social', icon: Globe, count: count.socialMedia },
             ]

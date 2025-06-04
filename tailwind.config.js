@@ -1,6 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 import daisyui from "daisyui";
-import animations from '@midudev/tailwind-animations'
+import animations from '@midudev/tailwind-animations';
+
 export default {
   content: [
     "./index.html",
@@ -9,7 +10,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['sans-serif','Poppins',]
+        sans: ['Poppins', 'sans-serif'],
       },
     },
   },
@@ -17,41 +18,37 @@ export default {
   daisyui: {
     themes: [
       {
-        "light": {
-          "primary": "#2E7A7F", //violet
-          "base-300": "#DCE3EB",
-          "base-200": "#FFFFFF",
-          "base-100": "#F1F3F4",
-          "stroke": "#DCDCDD",
-          "secondary": "#5DAAEE",
-          "accent": "#5395cf",
-          "warning": "#FFC565",
-          "info": "#5DAAEE",
-          "error": "C71026",
-          "success": "#0B8A00",
-          "neutral" : "#E3E3E3",
-          "neutral-content": "#0D0F11",
-
-
+        light: {
+          primary: "#3B82F6", // bright blue
+          secondary: "#6366F1", // indigo
+          accent: "#F59E0B", // amber
+          neutral: "#F3F4F6", // light gray
+          "neutral-content": "#111827", // dark text
+          "base-100": "#FFFFFF", // background
+          "base-200": "#F9FAFB",
+          "base-300": "#E5E7EB",
+          stroke: "#D1D5DB", // border
+          info: "#0EA5E9", // sky
+          success: "#10B981", // emerald
+          warning: "#FBBF24", // yellow
+          error: "#EF4444", // red
         },
-        "dark": {
-          "primary": "#2E7A7F", //violet
-          "base-100": "#262C36",
-          "base-200": "#191D23",
-          "base-300": "#0D0F11",
-          "stroke": "#576776",
-          "secondary": "#47A785",
-          "accent": "#5395cf",
-          "warning": "#EFB047",
-          "info": "#5DAAEE",
-          "error": "F53B30",
-          "success": "#2AA31F",
-          "neutral" : "#2B2E48",
-          "neutral-content": "#F1F3F4",
+        dark: {
+          primary: "#60A5FA", // soft blue
+          secondary: "#A78BFA", // light violet
+          accent: "#FCD34D", // warm yellow
+          neutral: "#1F2937", // gray-800
+          "neutral-content": "#F9FAFB", // near white
+          "base-100": "#111827", // background
+          "base-200": "#1E293B",
+          "base-300": "#374151",
+          stroke: "#4B5563", // border
+          info: "#38BDF8", // sky
+          success: "#34D399", // green
+          warning: "#FBBF24", // yellow
+          error: "#F87171", // red
         }
       }
-
     ],
   },
 }
-

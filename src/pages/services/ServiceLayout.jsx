@@ -1,152 +1,240 @@
-import { useState, useEffect, useCallback } from "react";
-import { Search } from "lucide-react";
-import BlogPostForm from "./CreateForm";
-import BlogCard from "./ServiceCard";
+import React, { useState, useEffect } from "react";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 import axiosInstance from "../../config/axios";
-import ServiceCard from "./ServiceCard";
-import ServiceForm from "./CreateForm";
+import { toast } from 'react-toastify';
+
+const allowedTitles = [
+  "Manufactures",
+  "Distributors",
+  "Healthcare  Providers",
+];
 
 function ServiceLayout() {
-  const [services, setServices] = useState([]);  
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editService, setEditService] = useState(null);
-  const [mode, setMode] = useState("add");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTitle, setSelectedTitle] = useState("Manufactures");
+  const [formData, setFormData] = useState({
+    title: "",
+    tagline: "",
+    taglineDescription: "",
+    content: "",
+    image: "",
+  });
 
-  const refreshServiceList = useCallback(async () => {
+  const [formErrors, setFormErrors] = useState({});
+  const [uploading, setUploading] = useState(false);
+
+  const fetchServiceByTitle = async (title) => {
     try {
-      setLoading(true);
-      const response = await axiosInstance.get("/service/get-all-service");
-      setServices(response.data.data);  
+      const response = await axiosInstance.get(`/service/get-service-by-title/${title}`);
+      return response.data.data;
     } catch (err) {
-      setError("Failed to load services");
-      console.error("Error fetching services:", err);
-    } finally {
-      setLoading(false);
+      console.error(`Error fetching service "${title}":`, err);
+      return null;
     }
-  }, []);
+  };
 
   useEffect(() => {
-    refreshServiceList();
-  }, [refreshServiceList]);
+    const loadSelectedService = async () => {
+      const details = await fetchServiceByTitle(selectedTitle);
+      if (details) {
+        setEditService(details);
+        setFormData({
+          title: details.title || "",
+          tagline: details.tagline || "",
+          taglineDescription: details.taglineDescription || "",
+          content: details.content || "",
+          image: details.image || "",
+        });
+        setFormErrors({});
+      }
+    };
+    loadSelectedService();
+  }, [selectedTitle]);
 
-  const handleDeleteService = (serviceId) => {
-    setServices((prevServices) => prevServices.filter((service) => service.id !== serviceId));
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  const handleEditService = (service) => {
-    setEditService(service);
-    setMode("edit");
-    setIsDrawerOpen(true);
+  const handleContentChange = (value) => {
+    setFormData(prev => ({
+      ...prev,
+      content: value,
+    }));
   };
 
-  const handleAddNewService = () => {
-    setEditService(null);
-    setMode("add");
-    setIsDrawerOpen(true);
+  const handleSelectService = (title) => {
+    setSelectedTitle(title);
   };
-  const filteredServices = services.filter((service) =>
-    service.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    service.shortDescription?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.tagline.trim()) errors.tagline = "Tagline is required.";
+    if (!formData.taglineDescription.trim()) errors.taglineDescription = "Tagline description is required.";
+    if (!formData.content || formData.content === "<p><br></p>") errors.content = "Content cannot be empty.";
+    if (!formData.image) errors.image = "Image is required.";
+    return errors;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const errors = validateForm();
+    setFormErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      toast.error("Please fix the errors before submitting.");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const dataToSend = new FormData();
+      dataToSend.append("title", formData.title);
+      dataToSend.append("tagline", formData.tagline);
+      dataToSend.append("taglineDescription", formData.taglineDescription);
+      dataToSend.append("content", formData.content);
+      if (formData.image instanceof File) {
+        dataToSend.append("image", formData.image);
+      }
+      dataToSend.append("servicePoints", JSON.stringify([]));
+
+      const response = await axiosInstance.post(
+        "/service/create-or-update-service",
+        dataToSend,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (response.data.success) {
+        toast.success(response.data.message);
+      } else {
+        toast.error("Failed to update service");
+      }
+    } catch (error) {
+      console.error("Failed to update service:", error);
+      toast.error("An error occurred during service update.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData(prev => ({
+        ...prev,
+        image: file,
+      }));
+    }
+  };
+
+  useEffect(() => {
+    let objectUrl;
+    if (formData.image instanceof File) {
+      objectUrl = URL.createObjectURL(formData.image);
+    }
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [formData.image]);
 
   return (
-    <div className="min-h-screen relative">
-      {/* Drawer */}
-      <div className="drawer drawer-end">
-        <input
-          id="new-service-drawer"
-          type="checkbox"
-          className="drawer-toggle"
-          checked={isDrawerOpen}
-          onChange={() => setIsDrawerOpen(!isDrawerOpen)}
-        />
-        <div className="drawer-content">
-          {/* Header Section */}
-          <div className="md:flex space-y-2 md:space-y-0 block justify-between items-center mb-8">
-            {/* <h1 className="text-3xl font-bold text-neutral-content">Services</h1> */}
-            <div className=' space-y-2'>
-       <h1 className="text-3xl font-bold text-neutral-content">Services </h1>
-       <p >Total Services : {services.length}</p>
-        </div>
-            <button
-              className="btn btn-primary text-white gap-2"
-              onClick={handleAddNewService}
-            >
-              + Add new service
-            </button>
-          </div>
+    <div className="w-full p-6 max-w-7xl mx-auto">
+      <div className="mb-6">
+        <label className="block text-sm font-bold text-primary mb-2">Select Service</label>
+        <select
+          value={selectedTitle}
+          onChange={(e) => handleSelectService(e.target.value)}
+          className="select select-bordered w-full max-w-xs bg-base-100 text-neutral-content border-stroke"
+        >
+          {allowedTitles.map(title => (
+            <option key={title} value={title}>{title}</option>
+          ))}
+        </select>
+      </div>
 
-          {/* Search Section */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-8">
-            <div className="relative flex-grow">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search service..."
-                className="input input-bordered w-full focus:outline-none pl-10 bg-base-100 text-neutral-content"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Service Grid */}
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, index) => (
-                <div
-                  key={index}
-                  className="card bg-base-100 animate-pulse transition-all duration-300 ease-in-out transform hover:scale-105"
-                >
-                  <div className="h-48 bg-base-100 rounded-3xl transition-colors duration-300"></div>
-                  <div className="card-body p-4 space-y-3">
-                    <div className="h-4 bg-base-200 w-1/2 transition-colors duration-300"></div>
-                    <div className="h-6 bg-base-200 w-3/4 transition-colors duration-300"></div>
-                    <div className="h-4 bg-base-200 w-full transition-colors duration-300"></div>
-                    <div className="flex gap-4 mt-4">
-                      <div className="h-4 bg-base-200 w-1/4 transition-colors duration-300"></div>
-                      <div className="h-4 bg-base-200 w-1/4 transition-colors duration-300"></div>
-                      <div className="h-4 bg-base-200 w-1/4 transition-colors duration-300"></div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : error ? (
-            <div className="text-center text-red-500">{error}</div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredServices.map((service) => (
-                <ServiceCard
-                  key={service.id}
-                  service={service}  
-                  onDelete={handleDeleteService}
-                  onEdit={() => handleEditService(service)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Drawer Sidebar */}
-        <div className="drawer-side">
-          <label htmlFor="new-service-drawer" className="drawer-overlay"></label>
-          <div className="p-4 md:w-[40%] w-full sm:w-1/2 overflow-y-scroll bg-base-100 h-[85vh] text-base-content absolute bottom-4 right-4 rounded-lg shadow-lg">
-            <h2 className="text-lg font-bold mb-4">
-              {editService ? "Edit Service" : "Add New Service"}
-            </h2>
-            <ServiceForm
-              onServiceCreated={refreshServiceList}
-              initialData={editService}
-              mode={mode}
-              setIsDrawerOpen={setIsDrawerOpen}
+      {editService && (
+        <form onSubmit={handleSubmit} className="space-y-6 p-8 rounded-xl bg-base-100 shadow-lg border border-stroke">
+          <div>
+            <label className="block text-sm font-bold text-neutral-content mb-1">Title</label>
+            <input
+              type="text"
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
+              className="input input-bordered w-full bg-base-200 text-neutral-content"
+              disabled
             />
           </div>
-        </div>
-      </div>
+
+          <div>
+            <label className="block text-sm font-bold text-neutral-content mb-1">Tagline</label>
+            <input
+              type="text"
+              name="tagline"
+              value={formData.tagline}
+              onChange={handleChange}
+              className="input input-bordered w-full bg-base-200 text-neutral-content"
+            />
+            {formErrors.tagline && <p className="text-error text-sm mt-1">{formErrors.tagline}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-neutral-content mb-1">Tagline Description</label>
+            <input
+              type="text"
+              name="taglineDescription"
+              value={formData.taglineDescription}
+              onChange={handleChange}
+              className="input input-bordered w-full bg-base-200 text-neutral-content"
+            />
+            {formErrors.taglineDescription && <p className="text-error text-sm mt-1">{formErrors.taglineDescription}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-neutral-content mb-1">Content</label>
+            <ReactQuill
+              value={formData.content}
+              onChange={handleContentChange}
+              theme="snow"
+              className="bg-white text-neutral-content"
+            />
+            {formErrors.content && <p className="text-error text-sm mt-1">{formErrors.content}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-neutral-content mb-1">Upload Image</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="file-input file-input-bordered w-full max-w-xs bg-base-200 text-neutral-content"
+            />
+            {formErrors.image && <p className="text-error text-sm mt-1">{formErrors.image}</p>}
+            {formData.image && (
+              <img
+                src={
+                  formData.image instanceof File
+                    ? URL.createObjectURL(formData.image)
+                    : formData.image
+                }
+                alt="Service"
+                className="mt-2 max-w-xs rounded-lg border border-stroke"
+              />
+            )}
+          </div>
+
+          <button type="submit" className="btn btn-primary px-6" disabled={uploading}>
+            {uploading ? "Updating..." : "Update Service"}
+          </button>
+        </form>
+      )}
     </div>
   );
 }
