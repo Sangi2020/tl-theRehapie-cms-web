@@ -67,7 +67,7 @@ function LoginPage() {
     };
 
     return (
-        <div style={{ backgroundImage: `url(${BackgroundImage})` }} className=" relative min-h-screen bg-cover bg-center w-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div style={{ backgroundImage: `url("https://media.zenfs.com/en/Benzinga/d0e81a25b68b5f5dda3a47effe23cf85")` }} className=" relative min-h-screen bg-cover bg-center w-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className='inset-0 absolute backdrop-blur-sm'></div>
             <div className="max-w-md w-full space-y-8 bg-black/70 z-[999] p-8 rounded-xl shadow-lg">
                 <div className="flex justify-between flex-wrap">
