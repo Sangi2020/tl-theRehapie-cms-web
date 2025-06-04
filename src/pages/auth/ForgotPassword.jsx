@@ -122,7 +122,7 @@ function ForgotPassword() {
 
     return (
         <div
-            style={{ backgroundImage: `url(${BackgroundImage})` }}
+            style={{ backgroundImage: `url("https://media.zenfs.com/en/Benzinga/d0e81a25b68b5f5dda3a47effe23cf85")` }}
             className="relative min-h-screen bg-cover bg-center w-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8"
         >
             {/* Reduced blur and added slight opacity for better readability */}
