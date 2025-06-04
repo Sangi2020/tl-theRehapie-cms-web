@@ -128,6 +128,7 @@ function Sidebar({ isOpen, onClose, isCollapsed, setIsCollapsed }) {
             items: [
                 { name: 'Pages', path: '/pages', icon: Layout },
                 { name: 'Blogs', path: '/blog', icon: PenTool, count: count.blogs },
+                { name: 'Compliance', path: '/documents', icon: FileText },
                 { name: 'SEO Editor', path: '/seo-editor', icon: Layers },
                 { name: 'FAQs', path: '/faqs', icon: FileQuestion, count: count.faqs },
                 { name: 'Services', path: '/services', icon: BriefcaseBusiness, count: count.services },
