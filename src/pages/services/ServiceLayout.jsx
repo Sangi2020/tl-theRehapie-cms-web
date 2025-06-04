@@ -1,18 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import axiosInstance from "../../config/axios";
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 
-const allowedTitles = [
-  "Manufactures",
-  "Distributors",
-  "Healthcare  Providers",
-];
+const allowedTitles = ["Manufactures", "Distributors", "Healthcare  Providers"];
 
 function ServiceLayout() {
+  const [theme, setTheme] = useState("light");
+  const quillRef = useRef(null);
+
   const [editService, setEditService] = useState(null);
-  const [selectedTitle, setSelectedTitle] = useState("Manufactures");
+  const [selectedTitle, setSelectedTitle] = useState("Healthcare  Providers");
   const [formData, setFormData] = useState({
     title: "",
     tagline: "",
@@ -20,9 +19,14 @@ function ServiceLayout() {
     content: "",
     image: "",
   });
-
   const [formErrors, setFormErrors] = useState({});
   const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setTheme(localStorage.getItem("theme") || "light");
+    }
+  }, []);
 
   const fetchServiceByTitle = async (title) => {
     try {
@@ -54,14 +58,14 @@ function ServiceLayout() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
   const handleContentChange = (value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       content: value,
     }));
@@ -101,15 +105,11 @@ function ServiceLayout() {
       }
       dataToSend.append("servicePoints", JSON.stringify([]));
 
-      const response = await axiosInstance.post(
-        "/service/create-or-update-service",
-        dataToSend,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const response = await axiosInstance.post("/service/create-or-update-service", dataToSend, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       if (response.data.success) {
         toast.success(response.data.message);
@@ -127,40 +127,85 @@ function ServiceLayout() {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         image: file,
       }));
     }
   };
 
-  useEffect(() => {
-    let objectUrl;
+  const previewImage = useMemo(() => {
     if (formData.image instanceof File) {
-      objectUrl = URL.createObjectURL(formData.image);
+      return URL.createObjectURL(formData.image);
     }
-    return () => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
+    return formData.image;
   }, [formData.image]);
+
+  useEffect(() => {
+    return () => {
+      if (formData.image instanceof File) {
+        URL.revokeObjectURL(previewImage);
+      }
+    };
+  }, [formData.image, previewImage]);
+
+  const quillModules = {
+    toolbar: [
+      [{ header: [1, 2, 3, false] }],
+      ["bold", "italic", "underline", "strike"],
+      [{ list: "ordered" }, { list: "bullet" }],
+      [{ indent: "-1" }, { indent: "+1" }],
+      [{ align: [] }],
+      ["blockquote", "code-block"],
+      ["link"],
+      ["clean"],
+      [{ color: [] }, { background: [] }],
+      [{ font: [] }],
+    ],
+    clipboard: {
+      matchVisual: false,
+    },
+  };
+
+  const quillFormats = [
+    "header",
+    "bold", "italic", "underline", "strike",
+    "list", "bullet", "indent",
+    "link",
+    "align", "color", "background", "font",
+    "blockquote", "code-block",
+  ];
 
   return (
     <div className="w-full p-6 max-w-7xl mx-auto">
-      <div className="mb-6">
-        <label className="block text-sm font-bold text-primary mb-2">Select Service</label>
-        <select
-          value={selectedTitle}
-          onChange={(e) => handleSelectService(e.target.value)}
-          className="select select-bordered w-full max-w-xs bg-base-100 text-neutral-content border-stroke"
-        >
-          {allowedTitles.map(title => (
-            <option key={title} value={title}>{title}</option>
-          ))}
-        </select>
+                  <h1 className="text-3xl font-bold text-neutral-content">Services </h1>
+                  <div>total service : {allowedTitles.length}</div>
+
+      <div className="mb-6 flex items-center flex-wrap">
+        <label className="block text-sm font-bold text-primary ">Select Service</label>
+        <div className="relative">
+  <div className="flex space-x-2 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory px-2">
+    {allowedTitles.map((title) => (
+      <button
+        key={title}
+        onClick={() => handleSelectService(title)}
+        className={`whitespace-nowrap px-4 py-2 rounded-full border snap-start ${
+          selectedTitle === title
+            ? "bg-primary text-white border-primary"
+            : "bg-base-100 text-neutral-content border-stroke"
+        } transition duration-300`}
+      >
+        {title}
+      </button>
+    ))}
+  </div>
+</div>
+
       </div>
 
       {editService && (
         <form onSubmit={handleSubmit} className="space-y-6 p-8 rounded-xl bg-base-100 shadow-lg border border-stroke">
+          {/* Title (Read-only) */}
           <div>
             <label className="block text-sm font-bold text-neutral-content mb-1">Title</label>
             <input
@@ -173,6 +218,7 @@ function ServiceLayout() {
             />
           </div>
 
+          {/* Tagline */}
           <div>
             <label className="block text-sm font-bold text-neutral-content mb-1">Tagline</label>
             <input
@@ -185,6 +231,7 @@ function ServiceLayout() {
             {formErrors.tagline && <p className="text-error text-sm mt-1">{formErrors.tagline}</p>}
           </div>
 
+          {/* Tagline Description */}
           <div>
             <label className="block text-sm font-bold text-neutral-content mb-1">Tagline Description</label>
             <input
@@ -197,17 +244,25 @@ function ServiceLayout() {
             {formErrors.taglineDescription && <p className="text-error text-sm mt-1">{formErrors.taglineDescription}</p>}
           </div>
 
+          {/* Content (Quill Editor) */}
           <div>
             <label className="block text-sm font-bold text-neutral-content mb-1">Content</label>
-            <ReactQuill
-              value={formData.content}
-              onChange={handleContentChange}
-              theme="snow"
-              className="bg-white text-neutral-content"
-            />
+            <div className={`quill-container ${theme === "dark" ? "dark-mode" : "light-mode"}`}>
+              <ReactQuill
+                ref={quillRef}
+                theme="snow"
+                value={formData.content}
+                onChange={handleContentChange}
+                modules={quillModules}
+                formats={quillFormats}
+                className={`custom-quill ${formErrors.content ? "quill-error" : ""}`}
+                placeholder="Write your post content..."
+              />
+            </div>
             {formErrors.content && <p className="text-error text-sm mt-1">{formErrors.content}</p>}
           </div>
 
+          {/* Image Upload */}
           <div>
             <label className="block text-sm font-bold text-neutral-content mb-1">Upload Image</label>
             <input
@@ -217,13 +272,9 @@ function ServiceLayout() {
               className="file-input file-input-bordered w-full max-w-xs bg-base-200 text-neutral-content"
             />
             {formErrors.image && <p className="text-error text-sm mt-1">{formErrors.image}</p>}
-            {formData.image && (
+            {previewImage && (
               <img
-                src={
-                  formData.image instanceof File
-                    ? URL.createObjectURL(formData.image)
-                    : formData.image
-                }
+                src={previewImage}
                 alt="Service"
                 className="mt-2 max-w-xs rounded-lg border border-stroke"
               />
