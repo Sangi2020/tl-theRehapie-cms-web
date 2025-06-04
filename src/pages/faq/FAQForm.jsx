@@ -4,7 +4,7 @@ import { Home } from 'lucide-react';
 import axiosInstance from '../../config/axios';
 import playNotificationSound from '../../utils/playNotification';
 
-function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs, homeFaqs }) {
+function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs, homeFaqs, pageFaqs }) {
   const [faq, setFaq] = useState({
     question: '',
     answer: '',
@@ -13,13 +13,13 @@ function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs, homeF
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Check if Home FAQ toggle should be disabled
+
   const isHomeFaqToggleDisabled = () => {
     if (mode === "edit" && initialData?.isHomeFaq) {
-      // If editing an existing Home FAQ, allow toggling off
+
       return false;
     }
-    // For new FAQs or editing non-Home FAQs, disable if already at limit
+
     return homeFaqs?.length >= 4;
   };
 
@@ -38,7 +38,7 @@ function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs, homeF
         isHomeFaq: false
       });
     }
-    // Reset errors and submission state
+
     setErrors({});
     setIsSubmitting(false);
   }, [mode, initialData, faqs]);
@@ -46,64 +46,93 @@ function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs, homeF
   const validateField = (name, value) => {
     console.log(`Validating ${name} with value: "${value}"`);
     console.log("Available FAQs for validation:", faqs);
-    
+
     const wordCount = value.trim().split(/\s+/).length;
-    
+
     switch (name) {
       case 'question':
         if (value.trim().length < 5) {
           return "Question must be at least 5 characters long";
         }
-        
-        // Check if the question is a duplicate
+
+
         if (faqs && Array.isArray(faqs)) {
           console.log("Checking for duplicates among", faqs.length, "existing FAQs");
-          
+
           const duplicates = faqs.filter(
-            (existingFAQ) => 
+            (existingFAQ) =>
               existingFAQ.question.trim().toLowerCase() === value.trim().toLowerCase() &&
               (mode !== "edit" || existingFAQ.id !== initialData?.id)
           );
-          
+
           if (duplicates.length > 0) {
             console.log("Duplicate found:", duplicates);
             return "This question already exists. Please enter a different question.";
           }
         }
-        
+
         return null;
-  
+
       case 'answer':
         return wordCount >= 10 && wordCount <= 45
           ? null
           : "Answer must be between 10 and 45 words long";
-  
+
       default:
         return null;
     }
   };
-  
+
+
+  const getNextOrder = (isHomeFaq) => {
+    if (isHomeFaq) {
+
+      const homeOrders = homeFaqs.map(faq => faq.homeOrder || 0);
+      return homeOrders.length > 0 ? Math.max(...homeOrders) + 1 : 1;
+    } else {
+
+      const pageOrders = pageFaqs.map(faq => faq.order || 0);
+      return pageOrders.length > 0 ? Math.max(...pageOrders) + 1 : 1;
+    }
+  };
+
+
+  const reorderFAQs = async (faqsToReorder, orderField) => {
+    const updates = faqsToReorder.map((faq, index) => ({
+      ...faq,
+      [orderField]: index + 1
+    }));
+
+    for (const updatedFaq of updates) {
+      try {
+        await axiosInstance.put(`/qna/update-faq/${updatedFaq.id}`, updatedFaq);
+      } catch (error) {
+        console.error(`Error updating FAQ ${updatedFaq.id}:`, error);
+      }
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     console.log("Form submission initiated");
 
-    // Validate all fields
+
     const newErrors = {};
-    
+
     const questionError = validateField('question', faq.question);
     if (questionError) newErrors.question = questionError;
 
     const answerError = validateField('answer', faq.answer);
     if (answerError) newErrors.answer = answerError;
 
-    // If there are any errors, set them and prevent submission
+
     if (Object.keys(newErrors).length > 0) {
       console.log("Validation errors found:", newErrors);
       setErrors(newErrors);
       return;
     }
 
-    // Prevent multiple submissions
+
     if (isSubmitting) {
       console.log("Submission already in progress");
       return;
@@ -114,27 +143,76 @@ function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs, homeF
       console.log("Submitting FAQ:", faq);
 
       let response;
+
       if (mode === "add") {
-        // First get the current FAQs to determine the next order
-        const faqsResponse = await axiosInstance.get('/qna/get-faqs');
-        const currentFAQs = faqsResponse.data.data || [];
-        const nextOrder = currentFAQs.length + 1;
+
+        const nextOrder = getNextOrder(faq.isHomeFaq);
 
         const newFAQ = {
           ...faq,
-          order: nextOrder
+          ...(faq.isHomeFaq
+            ? { homeOrder: nextOrder, order: null }
+            : { order: nextOrder, homeOrder: null }
+          )
         };
 
-        console.log("Creating new FAQ with order:", nextOrder);
+        console.log("Creating new FAQ:", newFAQ);
         response = await axiosInstance.post("/qna/create-faq", newFAQ);
         playNotificationSound();
         toast.success("FAQ created successfully!");
+
       } else if (mode === "edit" && initialData) {
-        const updatedFAQ = {
-          ...faq,
-          order: initialData.order
-        };
-        console.log("Updating FAQ with ID:", initialData.id);
+        const wasHomeFaq = initialData.isHomeFaq;
+        const isNowHomeFaq = faq.isHomeFaq;
+
+        let updatedFAQ = { ...faq };
+
+        if (wasHomeFaq && !isNowHomeFaq) {
+
+          const nextPageOrder = getNextOrder(false);
+          updatedFAQ = {
+            ...updatedFAQ,
+            order: nextPageOrder,
+            homeOrder: null
+          };
+
+
+          const remainingHomeFaqs = homeFaqs
+            .filter(f => f.id !== initialData.id)
+            .sort((a, b) => (a.homeOrder || 0) - (b.homeOrder || 0));
+
+          if (remainingHomeFaqs.length > 0) {
+            await reorderFAQs(remainingHomeFaqs, 'homeOrder');
+          }
+
+        } else if (!wasHomeFaq && isNowHomeFaq) {
+
+          const nextHomeOrder = getNextOrder(true);
+          updatedFAQ = {
+            ...updatedFAQ,
+            homeOrder: nextHomeOrder,
+            order: null
+          };
+
+
+          const remainingPageFaqs = pageFaqs
+            .filter(f => f.id !== initialData.id)
+            .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+          if (remainingPageFaqs.length > 0) {
+            await reorderFAQs(remainingPageFaqs, 'order');
+          }
+
+        } else {
+
+          updatedFAQ = {
+            ...updatedFAQ,
+            order: initialData.order,
+            homeOrder: initialData.homeOrder
+          };
+        }
+
+        console.log("Updating FAQ with ID:", initialData.id, updatedFAQ);
         response = await axiosInstance.put(`/qna/update-faq/${initialData.id}`, updatedFAQ);
         playNotificationSound();
         toast.success("FAQ updated successfully!");
@@ -151,6 +229,7 @@ function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs, homeF
         isHomeFaq: false
       });
       setIsDrawerOpen(false);
+
     } catch (error) {
       console.error("Error handling FAQ:", error);
       const errorMessage = error.response?.data?.message || "Failed to save FAQ. Please try again.";
@@ -174,8 +253,8 @@ function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs, homeF
           onChange={(e) => {
             const newQuestion = e.target.value;
             setFaq({ ...faq, question: newQuestion });
-            
-            // Validate and clear error if valid
+
+
             const questionError = validateField('question', newQuestion);
             setErrors(prev => ({
               ...prev,
@@ -185,7 +264,7 @@ function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs, homeF
         />
         {errors.question && <p className="text-error text-sm mt-1">{errors.question}</p>}
       </div>
-      
+
       <div className="mb-4">
         <label className="block text-sm font-medium mb-1">
           Answer <span className="text-error">*</span>
@@ -198,8 +277,8 @@ function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs, homeF
           onChange={(e) => {
             const newAnswer = e.target.value;
             setFaq({ ...faq, answer: newAnswer });
-            
-            // Validate and clear error if valid
+
+
             const answerError = validateField('answer', newAnswer);
             setErrors(prev => ({
               ...prev,
@@ -236,7 +315,7 @@ function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs, homeF
             />
           </div>
         </div>
-        
+
         {/* Home FAQ Status */}
         <div className="mt-2 text-xs">
           {homeFaqs?.length >= 4 && !faq.isHomeFaq && (
@@ -244,19 +323,14 @@ function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs, homeF
               <span>Home FAQ limit reached (4/4). Disable another Home FAQ to enable this option.</span>
             </div>
           )}
-          {/* {faq.isHomeFaq && (
-            <div className="alert alert-info py-2">
-              <span>This FAQ will be displayed on the home page</span>
-            </div>
-          )} */}
           <span className="text-base-content/70">
             Home FAQs: {homeFaqs?.length || 0}/4
           </span>
         </div>
       </div>
-      
-      <button 
-        type="submit" 
+
+      <button
+        type="submit"
         className="btn btn-primary w-full"
         disabled={isSubmitting}
       >
